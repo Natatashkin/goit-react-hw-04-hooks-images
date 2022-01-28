@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 // import 'react-loader-spinner/dist/loader/css/react-spinner-loader.css';
 import AppStyles from './App.styled';
@@ -16,8 +16,15 @@ const Status = {
   REJECTED: 'rejected',
 };
 
+function usePrevious(value) {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
+}
+
 const App = () => {
-  // const { IDLE, PENDING, RESOLVED, REJECTED } = Status;
   const [query, setQuery] = useState('');
   const [images, setImages] = useState([]);
   const [page, setPage] = useState(1);
@@ -29,11 +36,15 @@ const App = () => {
   const [modalImage, setModalImage] = useState(null);
   const [modalAlt, setModalAlt] = useState(null);
 
-  const handleInputValue = searchQuery => {
+  function handleInputValue(searchQuery) {
+    if (query === searchQuery) {
+      toast.error('This is the same query! Change keywords to find something!');
+      return;
+    }
     setQuery(searchQuery);
     setPage(1);
     setImages([]);
-  };
+  }
 
   const handleShowModal = (src, alt) => {
     toggleModal();
