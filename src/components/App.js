@@ -22,7 +22,6 @@ const App = () => {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState(Status.IDLE);
   const PER_PAGE = 12;
-  const [totalHits, setTotalHits] = useState(null);
   const [totalPages, setTotalPages] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [modalImage, setModalImage] = useState(null);
@@ -71,7 +70,6 @@ const App = () => {
           return Promise.reject();
         }
         setImages(prevImages => [...prevImages, ...hits]);
-        setTotalHits(totalHits);
         setTotalPages(Math.ceil(totalHits / PER_PAGE));
         setStatus(Status.RESOLVED);
       })
