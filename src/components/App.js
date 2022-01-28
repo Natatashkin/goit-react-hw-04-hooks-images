@@ -1,4 +1,4 @@
-import React, { Component, createRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 // import 'react-loader-spinner/dist/loader/css/react-spinner-loader.css';
 import AppStyles from './App.styled';
@@ -16,37 +16,48 @@ const Status = {
   REJECTED: 'rejected',
 };
 
-const modalRoot = createRef();
+const App = () => {
+  // const { IDLE, PENDING, RESOLVED, REJECTED } = Status;
+  const [query, setQuery] = useState('');
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState(Status.IDLE);
+  const PER_PAGE = 12;
+  const [totalHits, setTotalHits] = useState(null);
+  const [totalPages, setTotalPages] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
+  const [modalAlt, setModalAlt] = useState(null);
 
-export default class App extends Component {
-  state = {
-    query: '',
-    images: [],
-    status: Status.IDLE,
-    page: 1,
-    PER_PAGE: 12,
-    totalHits: null,
-    totalPages: null,
-    showModal: false,
-    modalImage: null,
-    modalAlt: null,
+  const handleInputValue = searchQuery => {
+    setQuery(searchQuery);
+    setPage(1);
+    setImages([]);
   };
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { query, page } = this.state;
-    const prevQuery = prevState.query;
-    const nextQuery = query;
-    const prevPage = prevState.page;
-    const nextPage = page;
+  const handleShowModal = (src, alt) => {
+    toggleModal();
+    setModalImage(src);
+    setModalAlt(alt);
+  };
 
-    if (prevQuery !== nextQuery || prevPage !== nextPage) {
-      this.setState({ status: Status.PENDING });
-      await this.fetchImages(query, page);
+  const toggleModal = () => {
+    setShowModal(!showModal);
+  };
+
+  const incrementPage = () => {
+    setPage(prevPage => prevPage + 1);
+  };
+  const handleLoadMoreButtonClick = () => {
+    incrementPage();
+  };
+
+  useEffect(() => {
+    if (query === '') {
+      return;
     }
-  }
+    setStatus(Status.PENDING);
 
-  fetchImages = async (query, page) => {
-    const { PER_PAGE } = this.state;
     API(query, page)
       .then(({ hits, totalHits }) => {
         if (hits.length === 0) {
@@ -55,77 +66,34 @@ export default class App extends Component {
           });
           return Promise.reject();
         }
-
-        this.setState(prevState => {
-          return {
-            images: [...prevState.images, ...hits],
-            totalHits: totalHits,
-            totalPages: Math.ceil(totalHits / PER_PAGE),
-            status: Status.RESOLVED,
-          };
-        });
-        if (page === this.state.totalPages) {
+        setImages(prevImages => [...prevImages, ...hits]);
+        setTotalHits(totalHits);
+        setTotalPages(Math.ceil(totalHits / PER_PAGE));
+        setStatus(Status.RESOLVED);
+        if (page === totalPages) {
           toast.success('There are all images!');
         }
       })
-      .catch(error => this.setState({ status: Status.REJECTED }));
-  };
+      .catch(error => setStatus(Status.REJECTED));
+  }, [query, totalPages, page]);
 
-  handleInputValue = searchQuery => {
-    this.setState({ query: searchQuery, page: 1, images: [] });
-  };
+  return (
+    <AppStyles>
+      <Searchbar onSubmit={handleInputValue} />
+      {status === Status.PENDING && page === 1 && <Loader />}
+      {images.length > 0 && (
+        <ImageGallery images={images} onClick={handleShowModal} />
+      )}
+      {status === Status.PENDING && page > 1 && <Loader />}
+      {status === Status.RESOLVED && page < totalPages && (
+        <Button onClick={handleLoadMoreButtonClick} status={status} />
+      )}
+      <Toaster />
+      {showModal && (
+        <Modal src={modalImage} title={modalAlt} onClose={toggleModal} />
+      )}
+    </AppStyles>
+  );
+};
 
-  incrementPage = () => {
-    this.setState(prevState => {
-      return { page: prevState.page + 1 };
-    });
-  };
-
-  handleLoadMoreButtonClick = e => {
-    this.incrementPage();
-  };
-
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({ showModal: !showModal }));
-  };
-
-  handleShowModal = (src, alt) => {
-    this.toggleModal();
-    this.setState({ modalImage: src, modalAlt: alt });
-  };
-
-  render() {
-    const {
-      images,
-      page,
-      totalPages,
-      status,
-      showModal,
-      modalImage,
-      modalAlt,
-    } = this.state;
-
-    return (
-      <AppStyles>
-        <Searchbar onSubmit={this.handleInputValue} />
-        {status === 'pending' && page === 1 && <Loader />}
-        {images.length > 0 && (
-          <ImageGallery images={images} onClick={this.handleShowModal} />
-        )}
-        {status === 'pending' && page > 1 && <Loader />}
-        {status === 'resolved' && page < totalPages && (
-          <Button onClick={this.handleLoadMoreButtonClick} status={status} />
-        )}
-        <Toaster />
-        {showModal && (
-          <Modal
-            root={modalRoot}
-            src={modalImage}
-            title={modalAlt}
-            onClose={this.toggleModal}
-          />
-        )}
-      </AppStyles>
-    );
-  }
-}
+export default App;
