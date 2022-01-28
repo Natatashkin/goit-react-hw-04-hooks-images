@@ -16,14 +16,6 @@ const Status = {
   REJECTED: 'rejected',
 };
 
-function usePrevious(value) {
-  const ref = useRef();
-  useEffect(() => {
-    ref.current = value;
-  });
-  return ref.current;
-}
-
 const App = () => {
   const [query, setQuery] = useState('');
   const [images, setImages] = useState([]);
