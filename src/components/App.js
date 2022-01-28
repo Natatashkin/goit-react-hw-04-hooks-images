@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 // import 'react-loader-spinner/dist/loader/css/react-spinner-loader.css';
 import AppStyles from './App.styled';
