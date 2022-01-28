@@ -56,6 +56,7 @@ const App = () => {
     if (query === '') {
       return;
     }
+
     setStatus(Status.PENDING);
 
     API(query, page)
@@ -70,12 +71,15 @@ const App = () => {
         setTotalHits(totalHits);
         setTotalPages(Math.ceil(totalHits / PER_PAGE));
         setStatus(Status.RESOLVED);
-        if (page === totalPages) {
-          toast.success('There are all images!');
-        }
       })
       .catch(error => setStatus(Status.REJECTED));
-  }, [query, totalPages, page]);
+  }, [query, page]);
+
+  useEffect(() => {
+    if (page === totalPages) {
+      toast.success('There are all images!');
+    }
+  }, [page, totalPages]);
 
   return (
     <AppStyles>
